@@ -2,9 +2,9 @@
 
 **A physics-constrained single-layer network whose trained weights are the mixing ratios of single-nanobubble spectra, so they show directly which bubbles are present.**
 
-Nanobubbles in graphene strain the lattice locally. The strain shows up as sharp, geometry-dependent features in the electronic density of states (DOS). When several bubbles are present, their features overlap, so it is hard to read off from one spectrum *which* bubbles, and how many, produced it.
+In graphene surface, nanobubbles are formed because of its atomic and thin layer. they are formed with gaussian shape so its sigma and heights are the fingerprint of each bubbles.. The strain shows up as sharp, geometry-dependent features in the electronic density of states (DOS). When several bubbles are present, their features overlap, so it is hard to read off from one spectrum *which* bubbles, and how many, produced it.
 
-For spatially separated nanobubbles, full quantum-transport calculations by our collaborators showed that the multi-bubble DOS is numerically equivalent to the **normalised sum of the constituent single-bubble spectra**. This repository builds that additive relation into a compact model. A target spectrum is decomposed over a library of single-bubble spectra by a single dense layer with non-negative, bounded weights. After fitting, each weight is the mixing ratio of one library geometry $(\sigma, h)$. No post-hoc attribution is needed.
+For spatially separated nanobubbles, KWANT quantum-transport simulation by our collaborators showed that the multi-bubble DOS is numerically equivalent to the **normalised sum of the constituent single-bubble spectra**. This repository builds that additive relation into a compact model. A target spectrum is decomposed over a library of single-bubble spectra by a single dense layer with non-negative, bounded weights. After fitting, each weight is the mixing ratio of one library geometry $(\sigma, h)$. 
 
 This is the code, the trained checkpoints and the evaluation for
 J. Kim, T. Song, and N. Myoung, *Physics-constrained machine learning for decoding multi-nanobubble configurations in graphene*, [arXiv:2607.17866](https://arxiv.org/abs/2607.17866) (2026).
