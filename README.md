@@ -36,7 +36,7 @@ Each target is fitted independently: one network, 76 parameters per spectrum. Tr
 
 ## Results
 
-Unless noted otherwise, all numbers come from `python scripts/evaluate_pretrained.py`. The script reads the 623 checkpoints in [`pretrained/`](pretrained). The ground truth of every checkpoint is encoded in its file name, and the outputs go to [`results/`](results) and [`assets/`](assets). The *weight error* is the normalised L1 deviation of the paper (Eq. 10), $\delta w = 100 \sum_i \lvert w_i - w_i^\text{true} \rvert / \sum_i \lvert w_i^\text{true} \rvert$ in %. *Exact support recovery* means that the set of detected bases ($w_i \ge 0.01$) is exactly the true set.
+Unless noted otherwise, all numbers come from `python scripts/evaluate_pretrained.py`. The script reads the 623 checkpoints in [`pretrained/`](pretrained). The ground truth of every checkpoint is encoded in its file name, and the outputs go to [`results/`](results) and [`assets/`](assets). The *weight error* is the normalised L1 deviation of the paper (Eq. 10), $\delta w = 100 \frac {\sum_i \lvert w_i - w_i^\text{true} \rvert} {\sum_i \lvert w_i^\text{true} \rvert}$ in %. *Exact support recovery* means that the set of detected bases ($w_i \ge 0.01$) is exactly the true set.
 
 ### 1. Noise-free configurations: exact recovery up to N = 10
 
@@ -67,8 +67,9 @@ All 238 random configurations (N = 1: every library spectrum once) are identifie
 The constituents that are in the library are still found, with the largest weights. The missing spectrum is approximated by a spread of other spectra, mostly flat graphene and bubbles of similar height. The weights then no longer sum to 1, and $N_\text{pred}$ is too large. Spurious detections and a weight sum $\neq 1$ are therefore a usable sign that the library is incomplete.
 
 ### 3. Measurement noise
+![noise examples](assets/noise_examples.png)
 
-Noise model (paper, Eq. 9): Gaussian white noise added to the log-DOS, $y_\eta(E) = y(E) + \eta f(E)$ with $f \sim \mathcal{N}(0, 1)$. In the code and the checkpoint names the amplitude is given as a noise level SNR, $\eta = \text{SNR}\cdot\lvert\max_E y\rvert$. Because $\max y \approx 16.5$, SNR = 0.01, 0.05 and 0.09 correspond to the amplitudes η = 0.165, 0.82 and 1.49 of the paper's Fig. 4; η = 0.165 is multiplicative noise of about 18 % on the DOS.
+Noise model (paper, Eq. 9): Gaussian white noise added to the log-DOS, $y_\eta(E) = y(E) + \eta f(E)$ with $f \sim \mathcal{N}(0, 1)$. In the code and the checkpoint names the amplitude is given as a noise level SNR, $\eta = \text{SNR}\cdot\lvert\max_Ey\rvert$. SNR = 0.01, 0.05 and 0.09 correspond to the amplitudes η = 0.165, 0.82 and 1.49 of the paper's Fig. 4; η = 0.165 is multiplicative noise of about 18 % on the DOS.
 
 ![noise robustness](assets/noise_robustness.png)
 
@@ -83,7 +84,6 @@ The figure follows Fig. 4 of the paper (N = 1, 3, 5; the paper uses 7, 6 and 8 r
 
 The weight error grows with the noise amplitude and with N. It stays at the few-percent level even when the noise visibly buries the spectrum (below). Support recovery is exact at η = 0.165 for every N. At larger η, the failures are always **false positives**: an extra basis gets a small weight just above the 0.01 threshold, and no true constituent is ever missed (`results/pretrained_scores.csv`).
 
-![noise examples](assets/noise_examples.png)
 
 ### 4. Comparison with conventional regression
 
@@ -103,13 +103,6 @@ Averaged over N (baselines: 40 targets per column; per-N values in [`results/bas
 | NNLS (linear DOS) | 100 % | 8 % | 8 % | 0 % | 2 % |
 | LassoCV, positive (linear DOS) | 15 % | 2 % | 5 % | 0 % | 2 % |
 
-| median weight error δw | SNR 0 | 0.01 | 0.03 | 0.05 | 0.09 |
-| :-- | :-: | :-: | :-: | :-: | :-: |
-| **this work** (Keras checkpoints) | **< 0.001 %** | **1.2 %** | **3.3 %** | **5.8 %** | **9.2 %** |
-| NNLS (linear DOS) | TODO | TODO | TODO | TODO | TODO |
-| LassoCV, positive (linear DOS) | TODO | TODO | TODO | TODO | TODO |
-
-TODO (author): the shipped baseline fits were scored before the switch to δw; run `python scripts/compare_baselines.py --data-dir /path/to/DOS` and fill in the two baseline rows from `results/baseline_summary.csv`.
 
 * **Linear-space regression breaks down as soon as there is noise.** NNLS is exact on clean data, but at SNR = 0.01 it already fails to recover the support in 92 % of the targets. The fit is dominated by the few energies where the DOS is largest; the log-DOS loss compares spectra in relative terms instead.
 * **LassoCV does not recover the support even without noise:** the L1 penalty shrinks the true weights, and the cross-validated penalty admits extra bases.
