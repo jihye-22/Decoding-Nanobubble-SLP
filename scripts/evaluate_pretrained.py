@@ -310,7 +310,9 @@ def main():
     print("[2] figures")
     if lib:
         fig_library(lib)
-    fig_recovery(lib)
+        fig_recovery(lib)
+    else:  # keep the shipped figures that show spectra instead of overwriting them with weight-only panels
+        print("  [skip] basis_library.png, recovery_examples.png, noise_examples.png (need the DOS library)")
     fig_repeated_incomplete(lib)
     fig_noise(df)
     if lib:

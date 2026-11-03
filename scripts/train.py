@@ -3,8 +3,8 @@
 Examples
     # three given constituents (sigma, h), noise-free, original Keras procedure
     python scripts/train.py --labels 20,4 25,7 30,10
-    # five random constituents, 5 % noise, fast L-BFGS-B solver of the same objective
-    python scripts/train.py --n 5 --seed 3 --snr 0.05 --solver lbfgs
+    # five random constituents, noise level SNR = 0.05
+    python scripts/train.py --n 5 --seed 3 --snr 0.05
     # incomplete library: only the first 70 basis spectra are offered to the model
     python scripts/train.py --labels 20,4 25,7 30,25 --n-basis 70
 
@@ -22,7 +22,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
 from nanobubble import BASIS_LABELS, basis_index, build_library, label_str, make_target, score_weights  # noqa: E402
-from nanobubble.fit import fit_target, solve_bounded  # noqa: E402
+from nanobubble.fit import fit_target  # noqa: E402
 
 
 def main():
@@ -35,8 +35,7 @@ def main():
     ap.add_argument("--seed", type=int, default=0, help="seed for the random configuration, noise and init")
     ap.add_argument("--snr", type=float, default=0.0, help="noise std as a fraction of max(log DOS)")
     ap.add_argument("--n-basis", type=int, default=76, help="offer only the first n basis spectra (incomplete library)")
-    ap.add_argument("--solver", choices=["keras", "lbfgs"], default="keras")
-    ap.add_argument("--epochs", type=int, default=100000)
+    ap.add_argument("--epochs", type=int, default=10000)
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--out", default=os.path.join(ROOT, "runs"), help="folder for checkpoint + json")
     ap.add_argument("--verbose", type=int, default=0)
@@ -61,22 +60,18 @@ def main():
     print("target:", [BASIS_LABELS[i] for i in idx], f"snr={a.snr}", f"library={a.n_basis} spectra")
 
     t0 = time.time()
-    if a.solver == "keras":
-        w, hist = fit_target(Xs, y, checkpoint=os.path.join(a.out, name + ".hdf5"), learning_rate=a.lr,
-                             epochs=a.epochs, seed=a.seed, verbose=a.verbose)
-        extra = {"epochs_run": len(hist["loss"]), "final_loss": float(min(hist["loss"]))}
-    else:
-        w, loss = solve_bounded(Xs, y)
-        extra = {"final_loss": loss}
+    w, hist = fit_target(Xs, y, checkpoint=os.path.join(a.out, name + ".hdf5"), learning_rate=a.lr,
+                         epochs=a.epochs, seed=a.seed, verbose=a.verbose)
+    extra = {"epochs_run": len(hist["loss"]), "final_loss": float(min(hist["loss"]))}
     extra["seconds"] = round(time.time() - t0, 1)
 
     w_full = np.zeros(X.shape[1])
     w_full[:a.n_basis] = w
     res = {"target": [BASIS_LABELS[i] for i in idx], "indices": idx, "snr": a.snr, "n_basis": a.n_basis,
-           "solver": a.solver, **extra, "weights": np.round(w_full, 6).tolist()}
+           **extra, "weights": np.round(w_full, 6).tolist()}
     if a.n_basis == X.shape[1]:
         res["score"] = score_weights(w_full, idx)
-    with open(os.path.join(a.out, name + f"__{a.solver}.json"), "w") as f:
+    with open(os.path.join(a.out, name + ".json"), "w") as f:
         json.dump(res, f, indent=1)
     top = np.argsort(w_full)[::-1][:max(len(set(idx)) + 3, 5)]
     print("largest weights:", ", ".join(f"{BASIS_LABELS[i]}: {w_full[i]:.4f}" for i in top))

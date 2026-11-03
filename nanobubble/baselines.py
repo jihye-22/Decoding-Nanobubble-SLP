@@ -16,16 +16,6 @@ def nnls_linear(X, y_log):
     return w
 
 
-def nnls_relative(X, y_log):
-    """NNLS on relative residuals,  min || (X w - Y) / Y ||^2 ,  Y = exp(y).
-
-    This is the first-order (linearised) version of the log-space loss; included to show how
-    much of the gain comes from comparing spectra on a relative / logarithmic scale.
-    """
-    Y = np.exp(y_log)
-    w, _ = nnls(X / Y[:, None], np.ones_like(Y), maxiter=50 * X.shape[1])
-    return w
-
 
 def lasso_cv_positive(X, y_log, cv=5, seed=0):
     """LassoCV(positive=True, no intercept) on the max-normalised linear DOS (settings of the
@@ -46,6 +36,5 @@ def lasso_cv_positive(X, y_log, cv=5, seed=0):
 
 METHODS = {
     "nnls": nnls_linear,
-    "nnls_relative": nnls_relative,
     "lasso_cv": lasso_cv_positive,
 }

@@ -1,6 +1,6 @@
 # Tested with Python 3.8 and the versions below.
-# TensorFlow is only needed for Keras training (scripts/train.py --solver keras);
-# evaluation, the L-BFGS-B solver and the baselines run on numpy/scipy/scikit-learn.
+# TensorFlow is only needed for training (scripts/train.py);
+# evaluation and the baselines run on numpy/scipy/scikit-learn.
 tensorflow==2.10.0
 numpy==1.24.3
 scipy==1.10.1

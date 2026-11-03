@@ -6,7 +6,7 @@ import numpy as np
 
 from .data import BASIS_LABELS, basis_index, true_weights
 
-#: a basis spectrum counts as "detected" if its weight is at least this value (as in the paper)
+#: a basis spectrum counts as "detected" if its weight is at least this value
 DETECTION_THRESHOLD = 0.01
 
 _CKPT_RE = re.compile(r"N(\d+)__([^_]+(?:\+[^_]+)*)(?:__snr([0-9.]+))?\.hdf5$")

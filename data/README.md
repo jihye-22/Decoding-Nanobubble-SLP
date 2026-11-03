@@ -11,11 +11,15 @@ The model needs a library of 78 single-nanobubble density-of-states spectra:
 ```
 
 * `sigma` (σ ∈ {20, 25, 30}) is the width parameter and `h` (0 … 25) the height of the bubble;
-  `h = 0` is flat graphene. **TODO (author): state the units of σ and h and the bubble height profile (Gaussian?).**
+  `h = 0` is flat graphene. σ and h are in units of the graphene lattice constant a = 0.246 nm, and the bubble
+  has the Gaussian profile z(r) = h exp(−|r − r₀|² / 2σ²) (paper, Eq. 2). The parent dataset of the paper has
+  σ = 20a, 21a, …, 30a; this repository uses σ ∈ {20, 25, 30}.
 * Each file has two whitespace-separated columns, energy `E` and `DOS`, on a uniform grid with
-  E ∈ [−0.1, 0.1] (19 980 – 19 996 rows). **TODO (author): units of E (eV or hopping energy t?) and DOS normalisation.**
+  E ∈ [−0.1, 0.1] eV (19 980 – 19 996 rows). **TODO (author): DOS normalisation.**
 * The spectra were pre-computed with full quantum-transport simulations by the collaborating group
-  (Prof. Nojoon Myoung, Chosun University). **TODO (author): method / code / reference for these calculations.**
+  (Prof. Nojoon Myoung, Chosun University): nearest-neighbour tight-binding model of graphene with
+  strain-dependent hopping, DOS computed with [Kwant](https://kwant-project.org/) as in T. Song et al.,
+  *Appl. Phys. Lett.* **119** (2021) and S. Kim et al., *Curr. Appl. Phys.* **68**, 44 (2024).
 
 The full library is not redistributed here; it is available from the authors on request. To run the
 spectrum-level scripts, place it in `data/full/` or point to it:

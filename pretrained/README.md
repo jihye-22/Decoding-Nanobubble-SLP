@@ -35,7 +35,7 @@ and Adam step count stored in each file.
 
 Common to all folders (see `nanobubble/model.py`, `nanobubble/fit.py`):
 one `Dense(1, use_bias=False)` layer with weights clipped to [0, 1] after every step; loss
-`mean((y − log(1e-12 + relu(Xw)))²)` over the 50 000 energy points; Adam; batch 128; up to 10⁵ epochs;
+`mean((y − log(1e-12 + relu(Xw)))²)` over the 50 000 energy points; Adam; batch 128; up to 10⁴ epochs (early stopping ended every run before epoch ≈ 2100);
 `EarlyStopping(loss, patience 100)`; `ReduceLROnPlateau(loss, factor 0.5, patience 50, min_lr 1e-8, min_delta 1e-8)`;
 `ModelCheckpoint(save_best_only)` on the training loss. There is no validation split: each network is fitted to a
 single spectrum, the "training set" being its energy points.
