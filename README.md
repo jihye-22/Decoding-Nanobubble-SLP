@@ -23,8 +23,8 @@ $$\mathcal{L}(\mathbf{w}) = \Big\langle \Big( y(E) - \log \sum_{i=1}^{76} w_i\\m
 
 | element | physical role |
 | :-- | :-- |
-| sum inside the log | the validated additive (superposition) relation for separated bubbles |
-| $0 \le w_i \le 1$ (weights clipping) | mixing ratios are fractions. The true solution is $w_i = 1/N$ for each constituent ($k/N$ if a geometry occurs $k$ times) |
+| sum inside the log | the validated additive relation (linear superposition) for separated bubbles |
+| weights clipping ([0,1]) | mixing ratios are fractions. The true solution is $w_i = 1/N$ for each constituent ($k/N$ if a geometry occurs $k$ times) |
 | loss on $\log$ DOS | the DOS spans more than four orders of magnitude; the log compares spectra in relative terms, so the sharp resonances do not dominate the fit |
 | readout | constituents = $\{i : w_i \ge 0.01\}$, $N_\text{pred}$ = their number, proportions = $w_i$ |
 
