@@ -1,0 +1,13 @@
+# environments
+venv/
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# interpolated-library cache and new training runs
+.cache/
+runs/
+
+# the full DOS library is not redistributed (see data/README.md)
+data/full/
