@@ -36,7 +36,7 @@ Each target is fitted independently: one network, 76 parameters per spectrum. Tr
 
 ## Results
 
-Unless noted otherwise, all numbers come from `python scripts/evaluate_pretrained.py`. The script reads the 623 checkpoints in [`pretrained/`](pretrained). The ground truth of every checkpoint is encoded in its file name, and the outputs go to [`results/`](results) and [`assets/`](assets). *Relative weight error* is $\lVert \mathbf{w} - \mathbf{w}_\text{true} \rVert_2 / \lVert \mathbf{w}_\text{true} \rVert_2$. *Exact support recovery* means that the set of detected bases ($w_i \ge 0.01$) is exactly the true set.
+Unless noted otherwise, all numbers come from `python scripts/evaluate_pretrained.py`. The script reads the 623 checkpoints in [`pretrained/`](pretrained). The ground truth of every checkpoint is encoded in its file name, and the outputs go to [`results/`](results) and [`assets/`](assets). The *weight error* is the normalised L1 deviation of the paper (Eq. 10), $\delta w = 100 \sum_i \lvert w_i - w_i^\text{true} \rvert / \sum_i \lvert w_i^\text{true} \rvert$ in %. *Exact support recovery* means that the set of detected bases ($w_i \ge 0.01$) is exactly the true set.
 
 ### 1. Noise-free configurations: exact recovery up to N = 10
 
@@ -46,7 +46,7 @@ Unless noted otherwise, all numbers come from `python scripts/evaluate_pretraine
 | :-- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | targets | 76 | 26 | 17 | 16 | 17 | 10 | 14 | 20 | 25 | 17 |
 | exact support recovery | 100 % | 100 % | 100 % | 100 % | 100 % | 100 % | 100 % | 100 % | 100 % | 100 % |
-| max. relative weight error | 6e-4 % | 3e-4 % | 1e-3 % | 2e-4 % | 3e-4 % | 1e-4 % | 3e-4 % | 3e-4 % | 4e-4 % | 2e-4 % |
+| max. weight error δw | 9e-4 % | 3e-4 % | 9e-4 % | 2e-4 % | 2e-4 % | 9e-5 % | 2e-4 % | 2e-4 % | 2e-4 % | 1e-4 % |
 
 All 238 random configurations (N = 1: every library spectrum once) are identified exactly. The weights match $1/N$ to better than $10^{-3}$ %, and the error does not grow with the number of bubbles.
 
@@ -54,7 +54,7 @@ All 238 random configurations (N = 1: every library spectrum once) are identifie
 
 ![repeated and incomplete](assets/repeated_and_incomplete.png)
 
-**Repeated constituents (a, b).** If the same geometry occurs twice, the model does not need two basis functions. It puts weight $2/3$ on that geometry, and $1/3$ on the other one. All 78 such targets are recovered exactly: 76 of the form $[i, i, j]$ and two hand-picked cases, e.g. (30,0) + 3×(20,5) + (20,19) → 0.200 / 0.600 / 0.200. The maximum weight error is $2\times10^{-4}$ %.
+**Repeated constituents (a, b).** If the same geometry occurs twice, the model does not need two basis functions. It puts weight $2/3$ on that geometry, and $1/3$ on the other one. All 78 such targets are recovered exactly: 76 of the form $[i, i, j]$ and two hand-picked cases, e.g. (30,0) + 3×(20,5) + (20,19) → 0.200 / 0.600 / 0.200. The maximum weight error is $\delta w = 2\times10^{-4}$ %.
 
 **Incomplete library (c).** Here the model sees only the first 70 spectra, and every target contains the missing geometry (30, 25):
 
@@ -68,20 +68,20 @@ The constituents that are in the library are still found, with the largest weigh
 
 ### 3. Measurement noise
 
-Noise model (paper, Eq. 9): Gaussian white noise added to the log-DOS, $y_\eta(E) = y(E) + \eta f(E)$ with $f \sim \mathcal{N}(0, 1)$. In this code the amplitude is set by the noise level SNR as $\eta = \text{SNR}\cdot\lvert\max_E y\rvert$. Because $\max y \approx 16.5$, SNR = 0.01 corresponds to $\sigma_\text{noise} \approx 0.17$ in log-DOS, i.e. multiplicative noise of about 18 %. SNR = 0.09 corresponds to $\sigma_\text{noise} \approx 1.5$.
+Noise model (paper, Eq. 9): Gaussian white noise added to the log-DOS, $y_\eta(E) = y(E) + \eta f(E)$ with $f \sim \mathcal{N}(0, 1)$. In the code and the checkpoint names the amplitude is given as a noise level SNR, $\eta = \text{SNR}\cdot\lvert\max_E y\rvert$. Because $\max y \approx 16.5$, SNR = 0.01, 0.05 and 0.09 correspond to the amplitudes η = 0.165, 0.82 and 1.49 of the paper's Fig. 4; η = 0.165 is multiplicative noise of about 18 % on the DOS.
 
 ![noise robustness](assets/noise_robustness.png)
 
-Trained checkpoints (304 noisy targets, 6–10 per cell; mean relative weight error / exact support recovery):
+The figure follows Fig. 4 of the paper (N = 1, 3, 5; the paper uses 7, 6 and 8 realisations per noise level). The shipped `pretrained/noise/` folder holds all trained runs, 304 noisy targets with 6–10 per cell and N = 2 in addition, so its means differ slightly from the paper's figure. Mean weight error δw / exact support recovery:
 
-| SNR | 0.01 | 0.03 | 0.05 | 0.07 | 0.09 |
+| η (SNR) | 0.165 (0.01) | 0.50 (0.03) | 0.82 (0.05) | 1.16 (0.07) | 1.49 (0.09) |
 | :-- | :-: | :-: | :-: | :-: | :-: |
-| N = 1 | 0.35 % / 100 % | 0.98 % / 100 % | 3.7 % / 75 % | 3.3 % / 100 % | 4.2 % / 86 % |
-| N = 2 | 0.75 % / 100 % | 2.2 % / 100 % | 3.3 % / 100 % | 4.4 % / 83 % | 6.4 % / 67 % |
-| N = 3 | 0.89 % / 100 % | 2.3 % / 100 % | 4.2 % / 86 % | 5.8 % / 67 % | 9.7 % / 33 % |
-| N = 5 | 1.7 % / 100 % | 4.5 % / 90 % | 7.4 % / 80 % | 10.4 % / 44 % | 11.7 % / 56 % |
+| N = 1 | 0.63 % / 100 % | 1.7 % / 100 % | 6.5 % / 75 % | 5.5 % / 100 % | 7.2 % / 86 % |
+| N = 2 | 1.2 % / 100 % | 3.2 % / 100 % | 4.8 % / 100 % | 6.7 % / 83 % | 8.6 % / 67 % |
+| N = 3 | 1.1 % / 100 % | 3.0 % / 100 % | 5.8 % / 86 % | 8.2 % / 67 % | 13.6 % / 33 % |
+| N = 5 | 2.0 % / 100 % | 5.4 % / 90 % | 8.7 % / 80 % | 12.8 % / 44 % | 14.7 % / 56 % |
 
-The weight error grows roughly linearly with the noise level and with N. It stays at the few-percent level even when the noise visibly buries the spectrum (below). Support recovery is exact at SNR = 0.01 for every N. Above that, the failures are always **false positives**: an extra basis gets a small weight just above the 0.01 threshold, and no true constituent is ever missed (`results/pretrained_scores.csv`).
+The weight error grows with the noise amplitude and with N. It stays at the few-percent level even when the noise visibly buries the spectrum (below). Support recovery is exact at η = 0.165 for every N. At larger η, the failures are always **false positives**: an extra basis gets a small weight just above the 0.01 threshold, and no true constituent is ever missed (`results/pretrained_scores.csv`).
 
 ![noise examples](assets/noise_examples.png)
 
@@ -103,13 +103,15 @@ Averaged over N (baselines: 40 targets per column; per-N values in [`results/bas
 | NNLS (linear DOS) | 100 % | 8 % | 8 % | 0 % | 2 % |
 | LassoCV, positive (linear DOS) | 15 % | 2 % | 5 % | 0 % | 2 % |
 
-| median relative weight error | SNR 0 | 0.01 | 0.03 | 0.05 | 0.09 |
+| median weight error δw | SNR 0 | 0.01 | 0.03 | 0.05 | 0.09 |
 | :-- | :-: | :-: | :-: | :-: | :-: |
-| **this work** (Keras checkpoints) | **< 0.001 %** | **0.82 %** | **2.2 %** | **4.0 %** | **7.1 %** |
-| NNLS (linear DOS) | < 0.001 % | 20 % | 67 % | 87 % | 167 % |
-| LassoCV, positive (linear DOS) | 8.2 % | 23 % | 85 % | 100 % | 105 % |
+| **this work** (Keras checkpoints) | **< 0.001 %** | **1.2 %** | **3.3 %** | **5.8 %** | **9.2 %** |
+| NNLS (linear DOS) | TODO | TODO | TODO | TODO | TODO |
+| LassoCV, positive (linear DOS) | TODO | TODO | TODO | TODO | TODO |
 
-* **Linear-space regression breaks down as soon as there is noise.** NNLS is exact on clean data, but at SNR = 0.01 it already fails to recover the support in 92 % of the targets. Its weight error is 20 %, more than 20 times that of the trained network. The fit is dominated by the few energies where the DOS is largest; the log-DOS loss compares spectra in relative terms instead.
+TODO (author): the shipped baseline fits were scored before the switch to δw; run `python scripts/compare_baselines.py --data-dir /path/to/DOS` and fill in the two baseline rows from `results/baseline_summary.csv`.
+
+* **Linear-space regression breaks down as soon as there is noise.** NNLS is exact on clean data, but at SNR = 0.01 it already fails to recover the support in 92 % of the targets. The fit is dominated by the few energies where the DOS is largest; the log-DOS loss compares spectra in relative terms instead.
 * **LassoCV does not recover the support even without noise:** the L1 penalty shrinks the true weights, and the cross-validated penalty admits extra bases.
 
 Runtime per target (one CPU core): NNLS 0.2 s, LassoCV 10 s. The Keras training takes 4 min (noise-free) to 20–30 min (noisy) per target on CPU.
@@ -119,15 +121,15 @@ Runtime per target (one CPU core): NNLS 0.2 s, LassoCV 10 s. The Keras training 
 | question | answer |
 | :-- | :-- |
 | Do the trained weights identify the configuration? | **Yes.** Exactly for all 316 noise-free targets (N = 1 … 10, repeated constituents) |
-| Are the weights quantitatively meaningful? | **Yes.** They equal the mixing ratios $k/N$ to $< 10^{-3}$ % |
-| Robust to noise? | Weight error ≈ 1 % at SNR 0.01 and ≈ 5–10 % at SNR 0.09. Support recovery degrades above SNR ≈ 0.03 through false positives |
-| Better than conventional regression? | Yes. Much more accurate weights and better support recovery than NNLS and LassoCV on the linear DOS at every noise level > 0 |
+| Are the weights quantitatively meaningful? | **Yes.** They equal the mixing ratios $k/N$ to $\delta w < 10^{-3}$ % |
+| Robust to noise? | δw ≈ 1–2 % at η = 0.165 and ≈ 7–15 % at η = 1.49. Support recovery degrades above η ≈ 0.5 through false positives |
+| Better than conventional regression? | Yes. Much better support recovery than NNLS and LassoCV on the linear DOS at every noise level > 0 |
 
 ## Limitations
 
 * **Synthetic, in-library targets.** All targets are built from the same library that is used for decoding. The additive model is therefore exact by construction, apart from the incomplete-library test. Real spectra (e.g. STM dI/dV) add broadening, a background, tip effects and geometries that are not in the library. The additive relation itself holds only for spatially separated bubbles.
 * **Incomplete library.** A missing geometry is absorbed by several other spectra (§2). The weights then cannot be read as a configuration without further checks (weight sum, residual).
-* **Noise.** The fixed threshold of 0.01 produces false positives above SNR ≈ 0.03, and the method gives no uncertainty estimate for the weights. The noise model is Gaussian on log-DOS, scaled to the maximum of the log-DOS. "SNR" is the name of this noise level in the code, not a power ratio.
+* **Noise.** The fixed threshold of 0.01 produces false positives above η ≈ 0.5 (SNR ≈ 0.03), and the method gives no uncertainty estimate for the weights. The noise model is Gaussian on log-DOS, scaled to the maximum of the log-DOS. "SNR" is the name of this noise level in the code, not a power ratio.
 * **Per-spectrum optimisation.** There is no amortised network; every new spectrum needs its own fit (minutes with Keras on CPU).
 * **Reproducibility of the original runs.** Seeds were not fixed, and the noise realisations of the noisy checkpoints were not stored. The noise numbers in §3 are therefore statistics of those runs; only the baseline fits in §4 are seeded.
 

@@ -42,7 +42,9 @@ FIG2 = ["random_mixtures/N1__s30h07.hdf5",
 REPEATED = ["repeated/N3__s30h20+s30h20+s30h11.hdf5",
             "repeated/N5__s30h00+s20h05+s20h05+s20h05+s20h19.hdf5"]
 INCOMPLETE = "incomplete_library/N3__s20h04+s25h07+s30h25.hdf5"
-NOISE_EXAMPLE = ("N1__s20h24", (0.03, 0.06, 0.09))
+NOISE_EXAMPLE = ("N1__s20h24", (0.01, 0.05, 0.09))
+#: max of the log-DOS of every target (the E = 0 peak); eta = SNR * |max log DOS| as in the paper's Fig. 4
+ETA_PER_SNR = 16.5
 
 plt.rcParams.update({"figure.dpi": 120, "font.size": 9.5, "axes.grid": True, "grid.alpha": 0.25,
                      "axes.spines.top": False, "axes.spines.right": False, "axes.edgecolor": MUTED,
@@ -82,10 +84,10 @@ def summarise(df):
     out = {"detection_threshold": DETECTION_THRESHOLD}
 
     def agg(d):
-        e = d["rel_l2_error_pct"]
+        e = d["delta_w_pct"]
         return {"checkpoints": int(len(d)), "exact_support_rate": round(float(d["exact_support"].mean()), 4),
-                "mean_rel_l2_error_pct": float(f"{e.mean():.4g}"), "std_rel_l2_error_pct": float(f"{e.std(ddof=0):.4g}"),
-                "max_rel_l2_error_pct": float(f"{e.max():.4g}"),
+                "mean_delta_w_pct": float(f"{e.mean():.4g}"), "std_delta_w_pct": float(f"{e.std(ddof=0):.4g}"),
+                "max_delta_w_pct": float(f"{e.max():.4g}"),
                 "mean_false_pos": round(float(d["false_pos"].mean()), 3),
                 "mean_false_neg": round(float(d["false_neg"].mean()), 3)}
 
@@ -149,7 +151,7 @@ def fig_recovery(lib):
         ax = axes[0, j]
         stem(ax, w, idx, C[0])
         ax.set_ylim(0, 1.08 if m["N"] == 1 else 1.6 / m["N"] + 0.02)
-        ax.set_title(f"N = {m['N']}: {s['n_pred']} detected, weight error {s['rel_l2_error_pct']:.1e} %", fontsize=9)
+        ax.set_title(f"N = {m['N']}: {s['n_pred']} detected, δw = {s['delta_w_pct']:.1e} %", fontsize=9)
         if j == 0:
             ax.set_ylabel("mixing ratio $w_i$")
             ax.legend(loc="upper right", fontsize=8)
@@ -231,20 +233,21 @@ def fig_repeated_incomplete(lib):
 
 
 def fig_noise(df):
-    nz = df[df.group == "noise"]
+    # as in Fig. 4 of the paper: N = 1, 3, 5 against the noise amplitude eta = SNR * |max log DOS|
+    nz = df[(df.group == "noise") & df.N.isin([1, 3, 5])]
     fig, axes = plt.subplots(1, 2, figsize=(10, 3.4))
     for k, (n, d) in enumerate(nz.groupby("N")):
         g = d.groupby("snr")
-        e = g["rel_l2_error_pct"]
-        x = np.array(list(g.groups))
-        axes[0].errorbar(x + (k - 1.5) * 0.0012, e.mean(), yerr=e.std(ddof=0), color=C[k], marker="o", ms=4,
+        e = g["delta_w_pct"]
+        x = ETA_PER_SNR * np.array(list(g.groups))
+        axes[0].errorbar(x + (k - 1) * 0.015, e.mean(), yerr=e.std(ddof=0), color=C[k], marker="o", ms=4,
                          lw=1.4, capsize=2.5, label=f"N = {n}")
         axes[1].plot(x, 100 * g["exact_support"].mean(), color=C[k], marker="o", ms=4, lw=1.4, label=f"N = {n}")
-    axes[0].set_ylabel("relative weight error [%]\n(mean ± std over targets)")
+    axes[0].set_ylabel("weight error δw [%]\n(mean ± std over targets)")
     axes[1].set_ylabel("exact support recovery [%]")
     axes[1].set_ylim(0, 105)
     for ax in axes:
-        ax.set_xlabel("noise level SNR  (σ_noise = SNR · max log DOS)")
+        ax.set_xlabel("noise amplitude η  (= SNR · |max log DOS|)")
     axes[0].legend(loc="upper left", fontsize=8)
     fig.tight_layout()
     save(fig, "noise_robustness.png")
@@ -267,12 +270,12 @@ def fig_noise_examples(lib):
         ax.plot(E, y_noisy, color=MUTED, lw=0.3, alpha=0.6, label="noisy target (illustrative draw)")
         ax.plot(E, y, color=INK, lw=1.6, label="clean target")
         ax.plot(E, np.log(X @ w), color=C[1], lw=1.1, ls="--", label="reconstruction")
-        ax.set_title(f"SNR = {snr}", fontsize=9)
+        ax.set_title(f"η = {ETA_PER_SNR * snr:.3g}", fontsize=9)
         ax.set_xlabel("energy E")
         stem(axes[1, j], w, idx, C[0])
         s = score_weights(w, idx)
         axes[1, j].set_ylim(0, 1.08)
-        axes[1, j].set_title(f"weight on {short(m['labels'][0])}: {w[idx[0]]:.3f}, error {s['rel_l2_error_pct']:.1f} %",
+        axes[1, j].set_title(f"weight on {short(m['labels'][0])}: {w[idx[0]]:.3f}, δw = {s['delta_w_pct']:.1f} %",
                              fontsize=9)
     axes[0, 0].set_ylabel("log DOS")
     axes[1, 0].set_ylabel("mixing ratio $w_i$")
@@ -297,10 +300,10 @@ def main():
         json.dump(summary, f, indent=1)
     for n, d in summary["random_mixtures"]["by_N"].items():
         print(f"  random N={n:2d}: {d['checkpoints']:3d} ckpts, exact {100 * d['exact_support_rate']:.0f} %, "
-              f"rel. error mean {d['mean_rel_l2_error_pct']:.1e} % max {d['max_rel_l2_error_pct']:.1e} %")
+              f"δw mean {d['mean_delta_w_pct']:.1e} % max {d['max_delta_w_pct']:.1e} %")
     print("  repeated:", {k: v for k, v in summary["repeated"].items() if k != "examples"})
     for s, d in summary["noise_all_N"].items():
-        print(f"  noise SNR={s}: exact {100 * d['exact_support_rate']:.0f} %, rel. error {d['mean_rel_l2_error_pct']:.2f} %")
+        print(f"  noise SNR={s}: exact {100 * d['exact_support_rate']:.0f} %, δw {d['mean_delta_w_pct']:.2f} %")
 
     try:
         lib = build_library(a.data_dir)

@@ -93,8 +93,8 @@ def init(data_dir):
 def summarise(df):
     g = df.groupby(["method", "N", "snr"])
     out = g.agg(runs=("exact_support", "size"), exact_support_rate=("exact_support", "mean"),
-                median_rel_l2_error_pct=("rel_l2_error_pct", "median"),
-                mean_rel_l2_error_pct=("rel_l2_error_pct", "mean"),
+                median_delta_w_pct=("delta_w_pct", "median"),
+                mean_delta_w_pct=("delta_w_pct", "mean"),
                 mean_n_pred=("n_pred", "mean"), mean_false_pos=("false_pos", "mean"),
                 mean_false_neg=("false_neg", "mean")).reset_index()
     out["method"] = pd.Categorical(out["method"], ORDER)
@@ -116,7 +116,8 @@ def plot(summary, path):
             kw = dict(color=colors[m], marker=marks[m], ms=5, lw=1.6 if m == "ours" else 1.1, label=LABELS[m])
             axes[0, j].plot(d["snr"], 100 * d["exact_support_rate"], **kw)
             e = d[d["snr"] > 0]  # at SNR = 0 the errors are ~0 except for LassoCV (see table)
-            axes[1, j].plot(e["snr"], e["median_rel_l2_error_pct"], **kw)
+            if e["median_delta_w_pct"].notna().any():
+                axes[1, j].plot(e["snr"], e["median_delta_w_pct"], **kw)
         axes[0, j].set_title(f"N = {n}")
         axes[1, j].set_yscale("log")
         axes[1, j].set_xlabel("noise level SNR")
@@ -124,7 +125,7 @@ def plot(summary, path):
             ax.grid(alpha=0.3)
     axes[0, 0].set_ylabel("exact support recovery [%]")
     axes[0, 0].set_ylim(-5, 105)
-    axes[1, 0].set_ylabel("median relative weight error [%]\n(SNR > 0)")
+    axes[1, 0].set_ylabel("median weight error δw [%]\n(SNR > 0)")
     h, l = axes[0, 0].get_legend_handles_labels()
     fig.legend(h, l, loc="lower center", ncol=3, frameon=False, bbox_to_anchor=(0.5, -0.01))
     fig.tight_layout(rect=(0, 0.06, 1, 1))
@@ -167,8 +168,8 @@ def main():
     pivot = summary.pivot_table(index="method", columns="snr", values="exact_support_rate", aggfunc="mean",
                                 observed=True)
     print("exact support recovery [%] (mean over N):\n", (100 * pivot).round(0).to_string())
-    print("median relative weight error [%] (all targets):\n",
-          df.pivot_table(index="method", columns="snr", values="rel_l2_error_pct", aggfunc="median").round(2)
+    print("median weight error delta_w [%] (all targets):\n",
+          df.pivot_table(index="method", columns="snr", values="delta_w_pct", aggfunc="median").round(2)
           .to_string())
     print("targets per (method, SNR):\n", df.pivot_table(index="method", columns="snr", values="N", aggfunc="size")
           .to_string())

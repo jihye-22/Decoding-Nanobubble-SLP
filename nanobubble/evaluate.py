@@ -39,21 +39,22 @@ def score_weights(w, indices, threshold=DETECTION_THRESHOLD, n_basis=None):
     Returns a dict with
       exact_support : detected set == true set of distinct constituents
       n_true / n_pred : number of distinct true / detected constituents
-      rel_l2_error : ||w - w_true||_2 / ||w_true||_2   (in %, as ``rel_l2_error_pct``)
+      delta_w_pct : normalised L1 weight error of the paper (Eq. 10), in %:
+                    100 * sum_i |w_i - w_true_i| / sum_i |w_true_i|
       max_abs_error, weight_sum
     """
     w = np.asarray(w, float).ravel()
     w_true = true_weights(indices, n_basis or len(w))
     det = set(np.flatnonzero(w >= threshold).tolist())
     true = set(np.flatnonzero(w_true > 0).tolist())
-    err = np.linalg.norm(w - w_true) / np.linalg.norm(w_true)
+    err = np.abs(w - w_true).sum() / np.abs(w_true).sum()
     return {
         "exact_support": det == true,
         "n_true": len(true),
         "n_pred": len(det),
         "false_pos": len(det - true),
         "false_neg": len(true - det),
-        "rel_l2_error_pct": 100.0 * float(err),
+        "delta_w_pct": 100.0 * float(err),
         "max_abs_error": float(np.max(np.abs(w - w_true))),
         "weight_sum": float(w.sum()),
     }

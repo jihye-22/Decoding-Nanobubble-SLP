@@ -15,7 +15,8 @@ The model needs a library of 78 single-nanobubble density-of-states spectra:
   has the Gaussian profile z(r) = h exp(−|r − r₀|² / 2σ²) (paper, Eq. 2). The parent dataset of the paper has
   σ = 20a, 21a, …, 30a; this repository uses σ ∈ {20, 25, 30}.
 * Each file has two whitespace-separated columns, energy `E` and `DOS`, on a uniform grid with
-  E ∈ [−0.1, 0.1] eV (19 980 – 19 996 rows). **TODO (author): DOS normalisation.**
+  E ∈ [−0.1, 0.1] eV (19 980 – 19 996 rows). The DOS is used as computed, without further normalisation:
+  every spectrum is linearly interpolated in E onto a common grid, and the model works with log DOS.
 * The spectra were pre-computed with full quantum-transport simulations by the collaborating group
   (Prof. Nojoon Myoung, Chosun University): nearest-neighbour tight-binding model of graphene with
   strain-dependent hopping, DOS computed with [Kwant](https://kwant-project.org/) as in T. Song et al.,
