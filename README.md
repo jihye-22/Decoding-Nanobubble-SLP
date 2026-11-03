@@ -13,22 +13,22 @@ J. Kim, T. Song, and N. Myoung, *Physics-constrained machine learning for decodi
 
 ## Model
 
-Library: 76 single-bubble DOS spectra $\mathrm{DOS}_i(E)$ (bubble width $\sigma \in \{20, 25, 30\}$, height $h = 1 \dots 25$, plus flat graphene) on 50 000 energy points. Target: the log-DOS of a configuration $S$ of $N$ bubbles,
+Library: 76 single-bubble DOS spectra $\mathrm{D}_i(E)$ (bubble width $\sigma \in \{20, 25, 30\}$, height $h = 1 \dots 25$, plus flat graphene) on 50 000 energy points. Target: the log-DOS of a configuration $S$ of $N$ bubbles,
 
-$$y(E) = \log \Big( \frac{1}{N} \sum_{i \in S} \mathrm{DOS}_i(E) \Big).$$
+$$y(E) = \log \Big( \frac{1}{N} \sum_{i \in S} \mathrm{D}_i(E) \Big).$$
 
 The model is one `Dense(1, use_bias=False)` unit whose inputs at energy $E$ are the 76 library values, trained with
 
-$$\mathcal{L}(\mathbf{w}) = \Big\langle \Big( y(E) - \log \sum_{i=1}^{76} w_i\, \mathrm{DOS}_i(E) \Big)^2 \Big\rangle_E , \qquad 0 \le w_i \le 1 .$$
+$$\mathcal{L}(\mathbf{w}) = \Big\langle \Big( y(E) - \log \sum_{i=1}^{76} w_i\\mathrm{D}_i(E) \Big)^2 \Big\rangle_E , \qquad 0 \le w_i \le 1 .$$
 
 | element | physical role |
 | :-- | :-- |
 | sum inside the log | the validated additive (superposition) relation for separated bubbles |
-| $w_i \ge 0$, $w_i \le 1$ (weights clipped after each step) | mixing ratios are fractions. The true solution is $w_i = 1/N$ for each constituent ($k/N$ if a geometry occurs $k$ times) |
+| $0 \le w_i \le 1$ (weights clipping) | mixing ratios are fractions. The true solution is $w_i = 1/N$ for each constituent ($k/N$ if a geometry occurs $k$ times) |
 | loss on $\log$ DOS | the DOS spans more than four orders of magnitude; the log compares spectra in relative terms, so the sharp resonances do not dominate the fit |
 | readout | constituents = $\{i : w_i \ge 0.01\}$, $N_\text{pred}$ = their number, proportions = $w_i$ |
 
-Each target is fitted independently: one network, 76 parameters per spectrum. Training (paper settings) uses Adam (lr $10^{-3}$), mini-batches of 128 energy points, up to $10^5$ epochs, `ReduceLROnPlateau` and early stopping on the loss (see [`nanobubble/`](nanobubble) and [`pretrained/README.md`](pretrained/README.md)). The same objective can also be minimised with L-BFGS-B under box constraints (`nanobubble.fit.solve_bounded`). It reproduces the noise-free checkpoints (max. weight difference $< 10^{-6}$) in seconds instead of minutes, and is used for the large baseline sweep. On three seeded targets (N = 3, SNR = 0 / 0.01 / 0.05), Keras training with the paper settings and L-BFGS-B reach the same loss (agreement to 6 significant digits on the noisy targets), with weights within 0.003 and relative weight errors of 1.74 % vs 1.57 % and 5.98 % vs 5.52 % (Keras vs L-BFGS-B). See [`results/solver_crosscheck.json`](results/solver_crosscheck.json) (`python scripts/compare_baselines.py --crosscheck`).
+Each target is fitted independently: one network, 76 parameters per spectrum. Training (paper settings) uses Adam, `ReduceLROnPlateau` and early stopping on the loss (see [`nanobubble/`](nanobubble) and [`pretrained/README.md`](pretrained/README.md)). The same objective can also be minimised with L-BFGS-B under box constraints (`nanobubble.fit.solve_bounded`). It reproduces the noise-free checkpoints (max. weight difference $< 10^{-6}$) in seconds instead of minutes, and is used for the large baseline sweep. On three seeded targets (N = 3, SNR = 0 / 0.01 / 0.05), Keras training with the paper settings and L-BFGS-B reach the same loss (agreement to 6 significant digits on the noisy targets), with weights within 0.003 and relative weight errors of 1.74 % vs 1.57 % and 5.98 % vs 5.52 % (Keras vs L-BFGS-B). See [`results/solver_crosscheck.json`](results/solver_crosscheck.json) (`python scripts/compare_baselines.py --crosscheck`).
 
 ![basis library](assets/basis_library.png)
 
